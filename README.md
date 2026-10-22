@@ -80,11 +80,40 @@ bitbake imx-image-core
 
 ## Reproducibility status
 
-The initial firmware was successfully built and booted from microSD
-using the original NXP source revisions and custom build fixes.
+The GitHub-based BSP has been successfully built and boot-tested on the NXP FRDM-i.MX93 Rev B2 board with 2 GB LPDDR4X.
 
-The GitHub source overrides and setup helper have not yet been
-validated through a fresh complete image build.
+### Verified
 
-The separate `imx-manifest` repository will pin the remaining
-NXP Yocto layers for reproducible checkout.
+- Fresh repository initialization and synchronization using the custom `imx-manifest` repository.
+- Successful integration of the pinned `meta-imx93-frdm` custom layer.
+- Linux kernel 6.18.2 compilation using the pinned GitHub source snapshot.
+- U-Boot 2025.04 compilation using the pinned GitHub source snapshot.
+- Successful complete `imx-image-core` build.
+- Successful flashing to microSD using NXP UUU 1.5.243.
+- Successful boot and root login on the physical FRDM-i.MX93 Rev B2 board.
+- Running Linux kernel `6.18.2-1.0.0-g725bbfc77d81`.
+- Root filesystem mounted from `/dev/mmcblk1p2`, confirming microSD boot.
+
+### Build host and resource configuration
+
+The validated build was performed on Ubuntu 22.04.5 LTS.
+
+To avoid host memory exhaustion during compilation, the following settings were used in `conf/local.conf`:
+
+```bitbake
+BB_NUMBER_THREADS = "4"
+PARALLEL_MAKE = "-j 4"
+PARALLEL_MAKEINST = "-j 4"
+```
+
+### Remaining limitation
+
+The successful reproduction build used verified source archives from an existing BSP download cache after some upstream archive downloads failed or produced checksum mismatches.
+
+Therefore, a completely cache-independent build on a clean host has not yet been verified.
+
+The GitHub-based source checkout, complete image compilation, microSD flashing, and physical hardware boot have all been validated.
+
+For the complete checkout, build, and flashing procedure, see:
+
+https://github.com/roosbeh-ALMASI/imx-manifest
