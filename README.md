@@ -106,11 +106,36 @@ PARALLEL_MAKE = "-j 4"
 PARALLEL_MAKEINST = "-j 4"
 ```
 
-### Remaining limitation
+### Source-download verification and remaining limitation
 
-The successful reproduction build used verified source archives from an existing BSP download cache after some upstream archive downloads failed or produced checksum mismatches.
+The successful reproduction build initially used verified source archives
+from an existing BSP download cache after some upstream downloads failed.
 
-Therefore, a completely cache-independent build on a clean host has not yet been verified.
+Further investigation identified an HTTP anti-bot challenge returned by
+gitlab.freedesktop.org to the default GNU wget user-agent.
+
+The following source archives were subsequently downloaded successfully
+through BitBake into an isolated download directory:
+
+- wayland 1.24.0
+- wayland-protocols 1.45
+- fontconfig 2.17.1
+
+All three downloads passed their existing recipe SHA-256 checksums.
+
+On the tested host, the following optional BitBake setting resolved
+these download failures:
+
+```bitbake
+FETCHCMD_wget = "/usr/bin/env wget --tries=2 --timeout=100 --user-agent=curl/8.5.0"
+```
+
+This setting may be added to the build directory's conf/local.conf
+if the default fetcher encounters this issue. It changes the wget
+user-agent globally and does not modify recipe URLs or checksums.
+
+A completely cache-independent image build on a separate clean host
+has not yet been verified.
 
 The GitHub-based source checkout, complete image compilation, microSD flashing, and physical hardware boot have all been validated.
 
