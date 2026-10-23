@@ -134,6 +134,28 @@ This setting may be added to the build directory's conf/local.conf
 if the default fetcher encounters this issue. It changes the wget
 user-agent globally and does not modify recipe URLs or checksums.
 
+### Isolated image dependency fetch test
+
+An additional source-fetch test was completed using BitBake 2.16.0
+and the pinned FRDM-i.MX93 BSP configuration.
+
+The test used separate download, temporary, persistent-cache, and
+shared-state directories, together with the wget user-agent workaround
+documented above.
+
+The `imx-image-core` dependency fetch test completed successfully:
+
+- 647 `do_fetch` tasks were scheduled.
+- 1,324 tasks completed successfully overall.
+- The isolated download cache occupied approximately 11 GB.
+- All three previously problematic archives passed SHA-256 verification.
+- 28 primary-source fetch warnings were reported; BitBake completed
+  successfully after attempting configured mirrors.
+
+This verifies the source-fetch stage under the tested configuration.
+It does not establish that all sources came directly from their
+upstream URLs or that no other local source repositories were used.
+
 A completely cache-independent image build on a separate clean host
 has not yet been verified.
 
