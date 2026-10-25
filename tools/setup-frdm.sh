@@ -62,5 +62,32 @@ if ! grep -Fq 'MACHINE_FEATURES:remove = "jailhouse"' "$LOCAL_CONF"; then
     printf 'MACHINE_FEATURES:remove = "jailhouse"\n' >> "$LOCAL_CONF"
 fi
 
+
+# FRDM build parallelism defaults
+# Conservative settings validated on the 12-core, 30 GiB RAM build host.
+# Preserve any parallelism settings already configured by the user.
+if ! grep -Eq '^[[:space:]]*BB_NUMBER_THREADS[[:space:]]*=' "$LOCAL_CONF"; then
+    printf '\nBB_NUMBER_THREADS = "4"\n' >> "$LOCAL_CONF"
+fi
+
+if ! grep -Eq '^[[:space:]]*PARALLEL_MAKE[[:space:]]*=' "$LOCAL_CONF"; then
+    printf 'PARALLEL_MAKE = "-j 4"\n' >> "$LOCAL_CONF"
+fi
+
+if ! grep -Eq '^[[:space:]]*PARALLEL_MAKEINST[[:space:]]*=' "$LOCAL_CONF"; then
+    printf 'PARALLEL_MAKEINST = "-j 4"\n' >> "$LOCAL_CONF"
+fi
+
+# FRDM source mirror configuration
+# Prefer verified Yocto source archives over Freedesktop GitLab URLs.
+# Preserve the upstream URL as fallback and existing BitBake mirrors.
+if ! grep -Fq '# FRDM source mirror configuration' "$LOCAL_CONF"; then
+    cat >> "$LOCAL_CONF" <<'EOF'
+
+# FRDM source mirror configuration
+PREMIRRORS:prepend = "https://gitlab.freedesktop.org/.* https://downloads.yoctoproject.org/mirror/sources/ \n "
+EOF
+fi
+
 echo "FRDM-i.MX93 build configuration updated: $BUILD_DIR"
 echo "Custom layer: $LAYER_DIR"
