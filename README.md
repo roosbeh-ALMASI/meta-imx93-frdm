@@ -62,21 +62,31 @@ Clone this custom layer into:
 
 `sources/meta-imx93-frdm`
 
-From the BSP root, run:
+NXP initialization changes the working directory into the build
+directory. From inside `build-frdm`, run:
 
 ```bash
-./sources/meta-imx93-frdm/tools/setup-frdm.sh "$PWD/build-frdm"
+bash ../sources/meta-imx93-frdm/tools/setup-frdm.sh "$PWD"
 ```
 
 The helper registers the custom layer and applies the required
 build settings. It requires an initialized build directory.
 
-Source the NXP build environment before running BitBake:
+After initialization and FRDM setup, build the image directly:
+
+```bash
+bitbake imx-image-core
+```
+
+For subsequent terminal sessions, return to the BSP root and
+reactivate the existing build environment:
 
 ```bash
 source setup-environment build-frdm
-bitbake imx-image-core
 ```
+
+Do not rerun `imx-setup-release.sh` merely to resume a build;
+it may restore saved configuration files.
 
 ## Reproducibility status
 
@@ -98,13 +108,39 @@ The GitHub-based BSP has been successfully built and boot-tested on the NXP FRDM
 
 The validated build was performed on Ubuntu 22.04.5 LTS.
 
-To avoid host memory exhaustion during compilation, the following settings were used in `conf/local.conf`:
+To avoid host memory exhaustion during compilation, the validated
+build used the following settings in `conf/local.conf`. The FRDM
+setup helper now applies these defaults automatically unless the
+user has already configured them:
 
 ```bitbake
 BB_NUMBER_THREADS = "4"
 PARALLEL_MAKE = "-j 4"
 PARALLEL_MAKEINST = "-j 4"
 ```
+
+### Default source premirror configuration
+
+The FRDM setup helper configures a Yocto source premirror for
+downloads from gitlab.freedesktop.org, redirecting matching fetches
+to downloads.yoctoproject.org/mirror/sources/.
+
+This avoids relying solely on the upstream GitLab download endpoint,
+which previously returned HTTP errors or anti-bot challenges.
+
+An independent fresh-checkout test successfully fetched and verified
+the recipe SHA-256 checksums for:
+
+- wayland 1.24.0
+- wayland-protocols 1.45
+- fontconfig 2.17.1
+- wayland-utils 1.2.0
+
+The premirror is configured automatically by setup-frdm.sh.
+No manual wget user-agent override is required for this tested
+four-recipe fetch procedure.
+
+This test does not establish a complete cache-independent image build.
 
 ### Source-download verification and remaining limitation
 
@@ -123,8 +159,9 @@ through BitBake into an isolated download directory:
 
 All three downloads passed their existing recipe SHA-256 checksums.
 
-On the tested host, the following optional BitBake setting resolved
-these download failures:
+Before the automatic premirror configuration was introduced, the
+following optional BitBake setting resolved these download failures
+on the tested host:
 
 ```bitbake
 FETCHCMD_wget = "/usr/bin/env wget --tries=2 --timeout=100 --user-agent=curl/8.5.0"
